@@ -42,7 +42,7 @@ input_data = {
 
 input_df = pd.DataFrame([input_data])
 # Make prediction
-prediction = pipeline.predict(input_df)*(4500- 200)+200
+prediction = pipeline.predict(input_df)
 # Display prediction
 
 st.header(f"Predicted Monthly Rent (RM): {prediction[0]:,.2f}")
