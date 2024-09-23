@@ -2,7 +2,6 @@ import streamlit as st
 import pickle
 import pandas as pd
 import io
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import plotly.express as px
 
 def intro():

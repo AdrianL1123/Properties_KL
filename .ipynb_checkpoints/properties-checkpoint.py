@@ -2,7 +2,6 @@ import streamlit as st
 import pickle
 import pandas as pd
 import io
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import plotly.express as px
 
 def intro():
@@ -46,55 +45,95 @@ def dataset():
 
 def eda():
     df = pd.read_csv("featured_data.csv")  
-    AveragePropertyType = df.groupby('property_type')['monthly_rent(RM)'].mean().sort_values(ascending=False).reset_index()
-    fig = px.bar(
-    AveragePropertyType.round(), 
-    y='monthly_rent(RM)',  
-    x='property_type', 
-    title='Distribution of Average Price Based on Property type', 
-    labels={'monthly_rent(RM)': 'Rent', 'property_type': 'Property Type'}
-    )
-    st.write(fig)
-    
-    AveragePrice = df.groupby(['region'])['monthly_rent(RM)'].mean().reset_index()
-    fig = px.bar(
-    AveragePrice, 
-    x='region',  
-    y='monthly_rent(RM)', 
-    title='Distribution of Average Price Based on Region', 
-    labels={'region': 'Region', 'monthly_rent(RM)': 'Average Monthly Rent (RM)'}
-    )
-    st.write(fig)
+    with st.expander('Data Visualization'):
+        choose = st.selectbox('Choose a plot to view', ['Property_type', 'Region', 'Facilities', 'Rooms', 'Property_type and Region'])
+        if choose == 'Property_type':
+            AveragePropertyType = df.groupby('property_type')['monthly_rent(RM)'].mean().sort_values(ascending=False).reset_index()
+            fig = px.bar(
+            AveragePropertyType.round(), 
+            y='monthly_rent(RM)',  
+            x='property_type', 
+            title='Distribution of Average Price Based on Property type', 
+            labels={'monthly_rent(RM)': 'Rent', 'property_type': 'Property Type'},
+             width=600, height=400, 
+            )
+            st.write(fig)
+        elif choose == 'Region':
+            AveragePrice = df.groupby(['region'])['monthly_rent(RM)'].mean().reset_index()
+            fig = px.bar(
+            AveragePrice, 
+            x='region',  
+            y='monthly_rent(RM)', 
+            title='Distribution of Average Price Based on Region', 
+            labels={'region': 'Region', 'monthly_rent(RM)': 'Average Monthly Rent (RM)'}
+            )
+            st.write(fig)
+        elif choose == 'Facilities':
+            df_facilities = df[['Gymnasium', 'Lift', 'Minimart', 'Sauna', 'Security', 'Swimming Pool']].sum()
+            fig = px.bar(df_facilities, title='Facilities Availability Across Properties')
+            st.write(fig)
+        elif choose == 'Rooms':
+            AverageRooms = df.groupby('rooms')['monthly_rent(RM)'].mean().sort_values(ascending=False).reset_index()
+            fig = px.bar(
+            AverageRooms.round(), 
+            y='monthly_rent(RM)',  
+            x='rooms', 
+            title='Distribution of Average Price Based on Rooms', 
+            labels={'monthly_rent(RM)': 'Rent', 'rooms': 'Rooms'}
+        )
+            st.write(fig)
+        elif choose == 'Property_type and Region':
+            region_property_type = df.groupby(['property_type', 'region'])['monthly_rent(RM)'].mean().reset_index()
+            fig = px.bar(
+            region_property_type, 
+            x='property_type', 
+            y='monthly_rent(RM)',  
+            title='Distribution of Average Price Based on Property Type and Region', 
+            labels={'monthly_rent(RM)': 'Rent (RM)', 'property_type': 'Property Type', 'region': 'Region'},
+            hover_data=['region'],
+            color='region',
+            width=650, height=400, 
+        )
+            st.write(fig)
 
-    df_facilities = df[['Gymnasium', 'Lift', 'Minimart', 'Sauna', 'Security', 'Swimming Pool']].sum()
-    fig = px.bar(df_facilities, title='Facilities Availability Across Properties')
-    st.write(fig)
-
-    AverageRooms = df.groupby('rooms')['monthly_rent(RM)'].mean().sort_values(ascending=False).reset_index()
-    fig = px.bar(
-    AverageRooms.round(), 
-    y='monthly_rent(RM)',  
-    x='rooms', 
-    title='Distribution of Average Price Based on Rooms', 
-    labels={'monthly_rent(RM)': 'Rent', 'rooms': 'Rooms'}
-)
-
-    st.write(fig)
-
-    region_property_type = df.groupby(['property_type', 'region'])['monthly_rent(RM)'].mean().reset_index()
-    fig = px.bar(
-    region_property_type, 
-    x='property_type', 
-    y='monthly_rent(RM)',  
-    width=900,
-    height=600,
-    title='Distribution of Average Price Based on Property Type and Region', 
-    labels={'monthly_rent(RM)': 'Rent (RM)', 'property_type': 'Property Type', 'region': 'Region'},
-    hover_data=['region'],
-    color='region'
-)
-    st.write(fig)
-    
+    with st.expander('Data Visualazation Part 2'):
+        choose = st.selectbox('Choosse a plot to view', ['Security vs Price', 'Apartment + Rooms vs Rent', 'Apartment + Parking vs Rent', 'Apartment + Size vs Rent'])
+        if choose == 'Security vs Price':
+            apartment = df[df['property_type']=='Apartment']
+            AverageWithSecurity = apartment.groupby('Security')['monthly_rent(RM)'].mean().reset_index()
+            fig = px.bar(
+                AverageWithSecurity,  
+                y='monthly_rent(RM)',  
+                x='Security', 
+                title='Distribution of Average Price Based on Security', 
+                labels={'monthly_rent(RM)': 'Rent', 'Security': 'Security'}
+            )
+            st.write(fig)
+        elif choose == 'Apartment + Rooms vs Rent':
+            apartments_only = df[df['property_type'] == 'Apartment']
+            apartments_avg_rent = apartments_only.groupby(['rooms'])['monthly_rent(RM)'].mean().sort_values(ascending=False).reset_index()
+            fig = px.bar(
+                apartments_avg_rent, 
+                x='rooms', 
+                y='monthly_rent(RM)',  
+                title='Distribution of Average Rent for Apartments Based on Rooms', 
+                labels={'monthly_rent(RM)': 'Rent (RM)', 'rooms': 'Number of Rooms'},
+                width=650, height=400, 
+            )
+            st.write(fig)
+        elif choose == 'Apartment + Parking vs Rent':
+            apartment = df[df['property_type']=='Apartment']
+            parking = apartment.groupby('parking')['monthly_rent(RM)'].mean().round().reset_index()
+            st.write(px.bar(parking, x='parking', y='monthly_rent(RM)',  
+            title='Average Rent Based on Parking Space', hover_data=['parking'], 
+            labels={'monthly_rent(RM)': 'Average Rent (RM)'}, width=650, height=400,)) 
+        elif choose == 'Apartment + Size vs Rent':
+            apartment = df[df['property_type']=='Apartment']
+            size = apartment.groupby('size')['monthly_rent(RM)'].mean().round().reset_index()
+            st.write(px.scatter(size, x='size', y='monthly_rent(RM)',  
+            title='Average Rent Based on Size', hover_data=['size'], 
+            labels={'monthly_rent(RM)': 'Average Rent (RM)'}, width=650, height=400,))
+            
     
 def demo():
     with open('DecisionTreeRegressor.pkl', 'rb') as file:
